@@ -260,11 +260,11 @@ imageSections.forEach((section, index) => {
     const isTextOnly = section.classList.contains('text-only-section');
     
     // پیدا کردن src عکس sharp-image
-    let imageSrc = sharpImage ? sharpImage.src : null;
+    let imageSrc = sharpImage ? (sharpImage.dataset.src || sharpImage.src) : null;
     
     // اگر این عکس در scroll-images هست، آن را نمایش بده
     if (imageSrc) {
-        const correspondingScrollImage = scrollImages.find(img => img.src === imageSrc);
+        const correspondingScrollImage = scrollImages.find(img => (img.dataset.src || img.src) === imageSrc);
         if (correspondingScrollImage) {
             // Timeline برای fade in و fade out
             const bgTimeline = gsap.timeline({

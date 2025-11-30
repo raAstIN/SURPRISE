@@ -97,69 +97,106 @@ if (creativeWrapper) {
     creativeTl.fromTo(secondCreative, { autoAlpha: 0, scale: 0.9, y: 50 }, { autoAlpha: 1, scale: 1, y: 0, duration: 1, ease: "power2.out" });
 }
 
-// --- بخش 2.5: انیمیشن کلمه به کلمه برای عنوان و متن خاطرات (بهینه‌سازی شده) ---
-const textContents = document.querySelectorAll('.text-content');
-
-textContents.forEach(textContent => {
-    const section = textContent.closest('.scroll-section');
-    if (section) {
-        ScrollTrigger.create({
-            trigger: section,
-            start: 'top 80%', // کمی زودتر شروع شود تا زمان برای پردازش باشد
-            once: true, // انیمیشن فقط یک بار اجرا شود
-            onEnter: () => {
-                // این کد فقط زمانی اجرا می‌شود که بخش مورد نظر وارد دید کاربر شود
-                const countdownTimer = textContent.querySelector('.countdown-timer');
-                const h2 = textContent.querySelector('h2');
-                const dateElement = textContent.querySelector('.memory-date');
-                const p = textContent.querySelector('p:not(.memory-date)');
-                let wordIndex = 0;
-
-                // انیمیشن countdown timer
-                if (countdownTimer) {
-                    gsap.to(countdownTimer, { opacity: 1, duration: 0.5, ease: 'power1.out' });
-                    wordIndex += 1;
-                }
-
-                // تقسیم متن عنوان به کلمات و انیمیشن آن‌ها
-                if (h2) {
-                    const h2Text = h2.textContent;
-                    h2.textContent = '';
-                    const h2Words = h2Text.split(' ');
-                    h2Words.forEach(wordText => {
-                        const span = document.createElement('span');
-                        span.className = 'word';
-                        span.textContent = wordText + ' ';
-                        h2.appendChild(span);
-                        gsap.to(span, { opacity: 1, duration: 0.3, delay: wordIndex * 0.2, ease: 'power1.out' });
+// --- بخش 2.5: انیمیشن کلمه به کلمه برای عنوان و متن خاطرات ---
+function animateMemoryWords() {
+    const textContents = document.querySelectorAll('.text-content');
+    
+    textContents.forEach(textContent => {
+        const countdownTimer = textContent.querySelector('.countdown-timer');
+        const h2 = textContent.querySelector('h2');
+        const dateElement = textContent.querySelector('.memory-date');
+        const p = textContent.querySelector('p:not(.memory-date)');
+        
+        // انیمیشن عنوان
+        if (h2) {
+            const h2Text = h2.textContent;
+            h2.textContent = '';
+            const h2Words = h2Text.split(' ');
+            const h2Spans = h2Words.map(word => {
+                const span = document.createElement('span');
+                span.className = 'word';
+                span.textContent = word + ' ';
+                return span;
+            });
+            h2.append(...h2Spans);
+        }
+        
+        // انیمیشن متن پاراگراف
+        if (p) {
+            const pText = p.textContent;
+            p.textContent = '';
+            const pWords = pText.split(' ');
+            const pSpans = pWords.map(word => {
+                const span = document.createElement('span');
+                span.className = 'word';
+                span.textContent = word + ' ';
+                return span;
+            });
+            p.append(...pSpans);
+        }
+        
+        // ScrollTrigger برای شروع انیمیشن
+        const section = textContent.closest('.scroll-section');
+        if (section) {
+            ScrollTrigger.create({
+                trigger: section,
+                start: 'top 75%',
+                onEnter: () => {
+                    let wordIndex = 0;
+                    
+                    // انیمیشن countdown timer
+                    if (countdownTimer) {
+                        gsap.to(countdownTimer, {
+                            opacity: 1,
+                            duration: 0.5,
+                            delay: 0,
+                            ease: 'power1.out'
+                        });
+                        wordIndex += 1;
+                    }
+                    
+                    // انیمیشن کلمات عنوان
+                    const h2Words = h2 ? h2.querySelectorAll('.word') : [];
+                    h2Words.forEach((word) => {
+                        gsap.to(word, {
+                            opacity: 1,
+                            duration: 0.3,
+                            delay: wordIndex * 0.2,
+                            ease: 'power1.out'
+                        });
+                        wordIndex++;
+                    });
+                    
+                    // انیمیشن تاریخ
+                    if (dateElement) {
+                        gsap.to(dateElement, {
+                            opacity: 1,
+                            duration: 0.4,
+                            delay: wordIndex * 0.2 + 0.2,
+                            ease: 'power1.out'
+                        });
+                        wordIndex += 1;
+                    }
+                    
+                    // انیمیشن کلمات پاراگراف
+                    const pWords = p ? p.querySelectorAll('.word') : [];
+                    pWords.forEach((word) => {
+                        gsap.to(word, {
+                            opacity: 1,
+                            duration: 0.3,
+                            delay: wordIndex * 0.2,
+                            ease: 'power1.out'
+                        });
                         wordIndex++;
                     });
                 }
+            });
+        }
+    });
+}
 
-                // انیمیشن تاریخ
-                if (dateElement) {
-                    gsap.to(dateElement, { opacity: 1, duration: 0.4, delay: wordIndex * 0.2 + 0.2, ease: 'power1.out' });
-                    wordIndex += 1;
-                }
-
-                // تقسیم متن پاراگراف به کلمات و انیمیشن آن‌ها
-                if (p) {
-                    const pText = p.textContent;
-                    p.textContent = '';
-                    const pWords = pText.split(' ');
-                    pWords.forEach(wordText => {
-                        const span = document.createElement('span');
-                        span.className = 'word';
-                        span.textContent = wordText + ' ';
-                        p.appendChild(span);
-                        gsap.to(span, { opacity: 1, duration: 0.3, delay: wordIndex * 0.2, ease: 'power1.out' });
-                        wordIndex++;
-                    });
-                }
-            }
-        });
-    }
-});
+// فراخوانی تابع بعد از بارگذاری DOM
+animateMemoryWords();
 
 // --- Countdown Timer ---
 function updateCountdownTimer() {
@@ -208,54 +245,13 @@ setInterval(updateCountdownTimer, 86400000);
 
 // --- بخش ۲: انیمیشن گالری عکس با Parallax و Staggered Effects ---
 const imageSections = gsap.utils.toArray('.scroll-section:not(.creative-slide)');
-const scrollImages = gsap.utils.toArray('.scroll-image');
-
-// ریست کردن تمام scroll-images به opacity 0
-gsap.set(scrollImages, { opacity: 0 });
 
 // هر بخش را جداگانه animate کن بدون pin کردن کل container
 imageSections.forEach((section, index) => {
     const contentFrame = section.querySelector('.content-frame');
-    const imageWrapper = section.querySelector('.sharp-image-wrapper');
     const textContent = section.querySelector('.text-content');
-    const sharpImage = section.querySelector('.sharp-image');
     const isLastMemory = section.id === 'last-memory';
     const isTextOnly = section.classList.contains('text-only-section');
-    
-    // پیدا کردن src عکس sharp-image
-    let imageSrc = sharpImage ? (sharpImage.dataset.src || sharpImage.src) : null;
-    
-    // اگر این عکس در scroll-images هست، آن را نمایش بده
-    if (imageSrc) {
-        const correspondingScrollImage = scrollImages.find(img => (img.dataset.src || img.src) === imageSrc);
-        if (correspondingScrollImage) {
-            // Timeline برای fade in و fade out
-            const bgTimeline = gsap.timeline({
-                scrollTrigger: {
-                    trigger: section,
-                    start: "top 90%",
-                    end: "bottom 10%",
-                    scrub: 0.5,
-                    markers: false
-                }
-            });
-            
-            // Fade in از top 90% تا top 70%
-            bgTimeline.fromTo(correspondingScrollImage,
-                { opacity: 0 },
-                { opacity: 1, duration: 0.5, ease: "power1.inOut" },
-                0
-            );
-            
-            // Stay visible در وسط
-            bgTimeline.to(correspondingScrollImage, { opacity: 1, duration: 1 }, 0.5);
-            
-            // Fade out از bottom 30% تا bottom 10%
-            bgTimeline.to(correspondingScrollImage,
-                { opacity: 0, duration: 0.5, ease: "power1.inOut" }
-            );
-        }
-    }
     
     // انیمیشن ظاهر شدن هر کارت
     // برای آخرین خاطره، انیمیشن نرم‌تر و بدون scrub است
@@ -352,20 +348,6 @@ imageSections.forEach((section, index) => {
         }
     }
 
-    // Parallax effect برای عکس
-    if (imageWrapper && !isLastMemory) {
-        gsap.to(imageWrapper, {
-            scrollTrigger: {
-                trigger: section,
-                start: "top center",
-                end: "bottom center",
-                scrub: 1,
-                markers: false
-            },
-            y: -30,
-            ease: "none"
-        });
-    }
 });
 
 // --- بخش ۳: Keyboard Navigation ---
@@ -518,7 +500,7 @@ progressContainer.addEventListener('click', () => {
 
 // شمارشگرها
 const startDate = new Date('2022-05-20T00:00:00');
-const returnDate = new Date('2024-12-14T00:00:00');
+const returnDate = new Date('2023-12-14T00:00:00');
 
 function updateCounter() {
     const now = new Date();

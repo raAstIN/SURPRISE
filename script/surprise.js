@@ -1,16 +1,5 @@
 gsap.registerPlugin(ScrollTrigger);
 
-// iOS Safari Optimization
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-if (isIOS) {
-    // کاهش animation complexity برای iOS
-    gsap.config({ force3D: false });
-    ScrollTrigger.config({ 
-        fastScrollEnd: true,
-        ignoreMobileResize: true
-    });
-}
-
 // --- بخش ۰: انیمیشن تایپ کردن عنوان و متن intro ---
 const introTitle = document.getElementById('intro-title');
 const introText1 = document.getElementById('intro-text1');
@@ -646,21 +635,4 @@ if (closingText) {
             });
         }
     });
-}
-
-// iOS Performance Optimization - Kill animations برای off-screen elements
-if (isIOS) {
-    let killAnimTimeout;
-    window.addEventListener('scroll', () => {
-        clearTimeout(killAnimTimeout);
-        killAnimTimeout = setTimeout(() => {
-            const elements = document.querySelectorAll('[style*="animation"]');
-            elements.forEach(el => {
-                const rect = el.getBoundingClientRect();
-                if (rect.top > window.innerHeight || rect.bottom < 0) {
-                    gsap.to(el, { clearProps: 'all', duration: 0 });
-                }
-            });
-        }, 200);
-    }, { passive: true });
 }

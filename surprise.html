@@ -482,61 +482,6 @@
     <!-- GSAP & ScrollTrigger -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/ScrollTrigger.min.js"></script>
-    
-    <!-- Lazy Loading Script برای iOS Optimization -->
-    <script>
-        // تنظیمات iOS Safari Optimization
-        if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
-            // غیرفعال کردن -webkit-overflow-scrolling برای جلوگیری از GPU issues
-            document.documentElement.style.webkitOverflowScrolling = 'auto';
-        }
-        
-        // Intersection Observer برای Lazy Loading Images
-        const lazyLoadImages = () => {
-            const images = document.querySelectorAll('img[data-src]');
-            
-            if ('IntersectionObserver' in window) {
-                const imageObserver = new IntersectionObserver((entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            const src = img.getAttribute('data-src');
-                            
-                            // Load with fade-in effect
-                            const tempImg = new Image();
-                            tempImg.onload = () => {
-                                img.src = src;
-                                img.removeAttribute('data-src');
-                                img.classList.add('loaded');
-                                observer.unobserve(img);
-                            };
-                            tempImg.onerror = () => {
-                                observer.unobserve(img);
-                            };
-                            tempImg.src = src;
-                        }
-                    });
-                }, {
-                    rootMargin: '50px' // شروع لود کردن 50px قبل از viewport
-                });
-                
-                images.forEach(img => imageObserver.observe(img));
-            } else {
-                // Fallback برای مرورگرهای قدیمی
-                images.forEach(img => {
-                    img.src = img.getAttribute('data-src');
-                    img.removeAttribute('data-src');
-                });
-            }
-        };
-        
-        // فعال کردن lazy loading
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', lazyLoadImages);
-        } else {
-            lazyLoadImages();
-        }
-    </script>
     <script src="./script/surprise.js"></script>
 </body>
 </html>

@@ -100,7 +100,7 @@ body {
     object-fit: cover;
     object-position: center center;
     opacity: 0;
-    filter: blur(10px) brightness(0.6);
+    filter: blur(15px) brightness(0.6);
     transform: scale(1.2);
     will-change: opacity;
 }

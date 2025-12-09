@@ -1,43 +1,119 @@
 gsap.registerPlugin(ScrollTrigger);
 
-// --- WebGPU Initialization (iOS 18+ Support) ---
-(async function initWebGPU() {
-    try {
-        if (!navigator.gpu) {
-            console.log('WebGPU not supported, using standard rendering');
+// --- Color Extraction Utility: استخراج رنگ‌های غالب از عکس ---
+const ColorExtractor = {
+    cache: new Map(),
+    
+    extractColors: function(imageSrc, callback) {
+        if (this.cache.has(imageSrc)) {
+            callback(this.cache.get(imageSrc));
             return;
         }
         
-        const adapter = await navigator.gpu.requestAdapter();
-        if (!adapter) {
-            console.log('WebGPU adapter not available');
-            return;
-        }
-        
-        const device = await adapter.requestDevice();
-        const canvas = document.createElement('canvas');
-        
-        // Store GPU capabilities for animation optimization
-        window.gpuCapabilities = {
-            hasWebGPU: true,
-            device: device,
-            adapter: adapter,
-            maxBindGroups: adapter.limits.maxBindGroups
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 150;
+            canvas.height = 150;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 150, 150);
+            
+            const imageData = ctx.getImageData(0, 0, 150, 150);
+            const data = imageData.data;
+            const pixels = [];
+            
+            // نمونه‌برداری از پیکسل‌ها (هر 4 پیکسل)
+            for (let i = 0; i < data.length; i += 16) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const a = data[i + 3];
+                
+                // نادیده گرفتن پیکسل‌های شفاف یا خیلی روشن
+                if (a > 128 && !(r > 240 && g > 240 && b > 240)) {
+                    pixels.push([r, g, b]);
+                }
+            }
+            
+            // کمینز کلاسترینگ برای پیدا کردن رنگ‌های اصلی
+            const colors = this.kMeans(pixels, 3);
+            const sortedColors = colors.sort((a, b) => this.brightness(b) - this.brightness(a));
+            
+            const result = {
+                colors: sortedColors.map(c => `rgb(${c[0]},${c[1]},${c[2]})`),
+                hex: sortedColors.map(c => this.rgbToHex(c[0], c[1], c[2]))
+            };
+            
+            this.cache.set(imageSrc, result);
+            callback(result);
         };
+        img.onerror = () => {
+            // رنگ پیش‌فرض اگر عکس لود نشد
+            callback({
+                colors: ['rgb(30, 30, 30)', 'rgb(60, 60, 60)', 'rgb(90, 90, 90)'],
+                hex: ['#1e1e1e', '#3c3c3c', '#5a5a5a']
+            });
+        };
+        img.src = imageSrc;
+    },
+    
+    kMeans: function(pixels, k, iterations = 5) {
+        if (pixels.length === 0) return Array(k).fill([50, 50, 50]);
         
-        // Enable GPU-accelerated rendering for GSAP
-        gsap.config({
-            force3D: 'auto',
-            nullTargetAnim: true
-        });
+        let centroids = [];
+        for (let i = 0; i < k; i++) {
+            centroids.push(pixels[Math.floor(Math.random() * pixels.length)]);
+        }
         
-        console.log('✓ WebGPU initialized successfully');
-        document.documentElement.dataset.gpuAvailable = 'true';
-    } catch (e) {
-        console.warn('WebGPU initialization failed:', e.message);
-        window.gpuCapabilities = { hasWebGPU: false };
+        for (let iter = 0; iter < iterations; iter++) {
+            const clusters = Array(k).fill(null).map(() => []);
+            
+            pixels.forEach(pixel => {
+                let minDist = Infinity;
+                let closestCluster = 0;
+                
+                centroids.forEach((centroid, i) => {
+                    const dist = Math.pow(pixel[0] - centroid[0], 2) + 
+                                Math.pow(pixel[1] - centroid[1], 2) + 
+                                Math.pow(pixel[2] - centroid[2], 2);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestCluster = i;
+                    }
+                });
+                
+                clusters[closestCluster].push(pixel);
+            });
+            
+            centroids = clusters.map(cluster => {
+                if (cluster.length === 0) return [50, 50, 50];
+                const avg = [0, 0, 0];
+                cluster.forEach(p => {
+                    avg[0] += p[0];
+                    avg[1] += p[1];
+                    avg[2] += p[2];
+                });
+                return [Math.round(avg[0] / cluster.length), 
+                        Math.round(avg[1] / cluster.length), 
+                        Math.round(avg[2] / cluster.length)];
+            });
+        }
+        
+        return centroids;
+    },
+    
+    brightness: function(rgb) {
+        return (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+    },
+    
+    rgbToHex: function(r, g, b) {
+        return '#' + [r, g, b].map(x => {
+            const hex = x.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
     }
-})();
+};
 
 // --- بخش ۰: انیمیشن تایپ کردن عنوان و متن intro ---
 const introTitle = document.getElementById('intro-title');
@@ -675,7 +751,7 @@ if (closingText) {
         }
     });
 }
-// --- Background crossfade (simplified for better browser compatibility) ---
+// --- Background Gradient Transition: استخراج رنگ و ایجاد گرادینت دینامیک ---
 (function() {
     const sections = document.querySelectorAll('.scroll-section');
     if (!sections || sections.length === 0) return;
@@ -709,28 +785,43 @@ if (closingText) {
         return src;
     };
 
+    const setGradientBg = (imageSrc) => {
+        if (!imageSrc) {
+            hidden.style.background = 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)';
+        } else {
+            ColorExtractor.extractColors(imageSrc, (colorData) => {
+                const colors = colorData.colors;
+                // ایجاد یک گرادینت پیچیده با 3-4 رنگ
+                const gradient = `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 50%, ${colors[2]} 100%)`;
+                hidden.style.background = gradient;
+            });
+        }
+    };
+
     const setBg = (src) => {
         if (!src) return;
-        hidden.style.backgroundImage = `url("${src}")`;
+        
+        // تنظیم گرادینت روی hidden layer
+        setGradientBg(src);
+        
         hidden.style.transition = 'none';
         hidden.style.opacity = '0';
         void hidden.offsetHeight;
-        hidden.style.transition = 'opacity 0.6s ease-in-out';
+        hidden.style.transition = 'opacity 0.8s cubic-bezier(0.22, 0.9, 0.35, 1)';
         hidden.style.opacity = '1';
+        
         setTimeout(() => {
             visible.classList.remove('visible');
             hidden.classList.add('visible');
             const tmp = visible;
             visible = hidden;
             hidden = tmp;
-        }, 600);
+        }, 800);
     };
 
     const firstBg = getSectionBackground(sections[0]);
-    if (firstBg) {
-        visible.style.backgroundImage = `url("${firstBg}")`;
-        visible.classList.add('visible');
-    }
+    setGradientBg(firstBg);
+    visible.classList.add('visible');
 
     sections.forEach((section) => {
         ScrollTrigger.create({

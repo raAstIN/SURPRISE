@@ -755,9 +755,6 @@ body {
         margin-bottom: 20px;
     }
 
-    .closing-text {
-        font-size: 0.95rem;
-        line-height: 1.6;
     }
 }
 
@@ -767,62 +764,25 @@ body {
     opacity: 0;
 }
 
-/* ============ WebGPU GPU-Optimized Rendering ============ */
-
-/* Enable GPU acceleration for transforms and animations */
-:root[data-gpu-available="true"] * {
-    transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-    perspective: 1000px;
+/* Background gradient transition container */
+#bg-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
 }
 
-/* GPU-optimized background transitions with WebGPU */
-:root[data-gpu-available="true"] #bg-transition .bg-layer {
-    will-change: opacity, transform;
-    transform: translate3d(0, 0, 0) scale(1);
-    mix-blend-mode: screen;
-    filter: brightness(0.85) saturate(1.05);
-}
-
-:root[data-gpu-available="true"] #bg-transition .bg-layer.blurred {
-    filter: blur(6px) brightness(0.7) saturate(1.1);
-    mix-blend-mode: multiply;
-}
-
-/* Enhance animations with GPU when available */
-:root[data-gpu-available="true"] .content-frame,
-:root[data-gpu-available="true"] .text-content,
-:root[data-gpu-available="true"] .sharp-image-wrapper {
-    will-change: auto;
-    transform: translate3d(0, 0, 0);
-}
-
-/* GPU-optimized backdrop filter for creative-content */
-:root[data-gpu-available="true"] .creative-content {
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-}
-
-/* Standard rendering (no WebGPU fallback) */
 #bg-transition .bg-layer {
     position: absolute;
     inset: 0;
     background-size: cover;
     background-position: center center;
-    background-repeat: no-repeat;
     opacity: 0;
-    transition: opacity 0.9s cubic-bezier(.22,.9,.35,1), transform 1s ease;
-    transform: scale(1.03);
-    will-change: opacity, transform;
-    filter: brightness(0.85);
+    transition: opacity 0.8s cubic-bezier(0.22, 0.9, 0.35, 1);
+    will-change: opacity, background;
 }
 
 #bg-transition .bg-layer.visible {
     opacity: 1;
-    transform: scale(1);
-}
-
-#bg-transition .bg-layer.blurred {
-    filter: blur(6px) brightness(0.7);
-    transform: scale(1.06);
 }

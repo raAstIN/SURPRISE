@@ -51,32 +51,41 @@ if (introTitle && introText1 && introText2) {
         return span;
     });
     
-    // انیمیشن کلمات با GSAP
-    const introTL = gsap.timeline({ delay: 1.3 });
-    
-    // انیمیشن عنوان
-    introTL.to(titleSpans, {
-        opacity: 1,
-        duration: 0.4,
-        ease: 'power1.out',
-        stagger: 0.3
-    }, 0);
-    
-    // انیمیشن متن اول
-    introTL.to(text1Spans, {
-        opacity: 1,
-        duration: 0.4,
-        ease: 'power1.out',
-        stagger: 0.3
-    }, 0.5);
-    
-    // انیمیشن متن دوم
-    introTL.to(text2Spans, {
-        opacity: 1,
-        duration: 0.4,
-        ease: 'power1.out',
-        stagger: 0.3
-    }, 1);
+    // انیمیشن کلمات با GSAP - فقط وقتی intro section visible شه
+    const introSection = document.querySelector('.intro-section');
+    if (introSection) {
+        ScrollTrigger.create({
+            trigger: introSection,
+            start: 'top 80%',
+            onEnter: () => {
+                const introTL = gsap.timeline();
+                
+                // انیمیشن عنوان
+                introTL.to(titleSpans, {
+                    opacity: 1,
+                    duration: 0.4,
+                    ease: 'power1.out',
+                    stagger: 0.3
+                }, 0);
+                
+                // انیمیشن متن اول
+                introTL.to(text1Spans, {
+                    opacity: 1,
+                    duration: 0.4,
+                    ease: 'power1.out',
+                    stagger: 0.3
+                }, 0.5);
+                
+                // انیمیشن متن دوم
+                introTL.to(text2Spans, {
+                    opacity: 1,
+                    duration: 0.4,
+                    ease: 'power1.out',
+                    stagger: 0.3
+                }, 1);
+            }
+        });
+    }
 }
 
 // --- بخش ۱: انیمیشن اسلایدهای خلاقانه ---
@@ -637,153 +646,111 @@ if (closingText) {
     });
 }
 
-// --- Background Blur Transition: Lazy load blur background per section ---
+// --- Background Management: Set background image based on section content ---
 (function() {
-    const sections = document.querySelectorAll('.scroll-section');
-    if (!sections || sections.length === 0) return;
-
     const bgContainer = document.createElement('div');
     bgContainer.id = 'bg-transition';
-    const layerA = document.createElement('div');
-    layerA.className = 'bg-layer visible';
-    const layerB = document.createElement('div');
-    layerB.className = 'bg-layer';
-    bgContainer.appendChild(layerA);
-    bgContainer.appendChild(layerB);
     document.body.insertBefore(bgContainer, document.body.firstChild);
 
-    let visible = layerA;
-    let hidden = layerB;
-    const loadedImages = new Set();
-    let latestRequestedSrc = null; // prevents stale onload from overwriting
-
-    const getSectionBackground = (section) => {
-        if (section.dataset && section.dataset.bg) return section.dataset.bg;
-        const img = section.querySelector('img.scroll-image, img.slider-image, img.sharp-image');
-        let src = null;
-        if (img) {
-            src = (img.dataset && img.dataset.src) ? img.dataset.src : img.src;
-        }
+    // Helper function to set background
+    const setBackground = (src) => {
         if (!src) {
-            const cs = getComputedStyle(section);
-            const bg = cs.backgroundImage || '';
-            const m = bg.match(/url\((?:"|')?(.*?)(?:"|')?\)/);
-            if (m) src = m[1];
+            bgContainer.style.backgroundImage = 'none';
+            bgContainer.style.backgroundColor = '#000';
+        } else {
+            bgContainer.style.backgroundImage = `url("${src}")`;
+            bgContainer.style.backgroundColor = '#000';
         }
-        return src;
     };
 
-    const clearBg = () => {
-        latestRequestedSrc = null;
-        // Clear both layers to black to avoid remnants
-        layerA.style.backgroundImage = 'none';
-        layerB.style.backgroundImage = 'none';
-        layerA.style.backgroundColor = '#000';
-        layerB.style.backgroundColor = '#000';
-        layerA.style.transition = 'none';
-        layerB.style.transition = 'none';
-        layerA.style.opacity = '1';
-        layerB.style.opacity = '0';
-        // make sure visible points to layerA
-        visible = layerA;
-        hidden = layerB;
-        layerA.classList.add('visible');
-        layerB.classList.remove('visible');
-    };
-
-    const applyLoadedBackground = (src) => {
-        // ignore stale loads
-        if (latestRequestedSrc !== src) return;
-        // if already visible with same src, do nothing
-        if (visible.style.backgroundImage && visible.style.backgroundImage.indexOf(src) !== -1) return;
-
-        hidden.style.backgroundImage = `url("${src}")`;
-        hidden.style.backgroundColor = '#000';
-        hidden.style.transition = 'none';
-        hidden.style.opacity = '0';
-        void hidden.offsetHeight;
-        hidden.style.transition = 'opacity 0.7s ease-in-out';
-        hidden.style.opacity = '1';
-
-        setTimeout(() => {
-            visible.classList.remove('visible');
-            hidden.classList.add('visible');
-            const tmp = visible;
-            visible = hidden;
-            hidden = tmp;
-        }, 700);
-    };
-
-    const setBg = (src) => {
-        latestRequestedSrc = src;
-        if (!src) {
-            clearBg();
-            return;
-        }
-
-        // if the requested src is already visible, keep it
-        if (visible.style.backgroundImage && visible.style.backgroundImage.indexOf(src) !== -1) return;
-
-        if (loadedImages.has(src)) {
-            applyLoadedBackground(src);
-            return;
-        }
-
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-            loadedImages.add(src);
-            applyLoadedBackground(src);
-        };
-        img.onerror = () => {
-            // if failed to load and still the latest request, clear background
-            if (latestRequestedSrc === src) clearBg();
-        };
-        img.src = src;
-    };
-
-    const firstBg = getSectionBackground(sections[0]);
-    if (firstBg) {
-        latestRequestedSrc = firstBg;
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-            loadedImages.add(firstBg);
-            visible.style.backgroundImage = `url("${firstBg}")`;
-            visible.classList.add('visible');
-        };
-        img.onerror = () => {
-            visible.style.backgroundColor = '#000';
-            visible.classList.add('visible');
-        };
-        img.src = firstBg;
-    } else {
-        clearBg();
-    }
-
-    sections.forEach((section) => {
+    // Helper function to get image src from section
+    const getImageSrcFromSection = (section) => {
+        const isMultiPhoto = section.classList.contains('multi-photo-memory');
         const isTextOnly = section.classList.contains('text-only-section');
 
+        if (isTextOnly) {
+            return null; // Black background for text-only
+        }
+
+        if (isMultiPhoto) {
+            // For slider sections, get the currently active image
+            const activeImage = section.querySelector('.slider-image.active');
+            if (activeImage) {
+                return activeImage.dataset.src || activeImage.src;
+            }
+            // If no active image yet, get the first one
+            const firstImage = section.querySelector('.slider-image');
+            return firstImage ? (firstImage.dataset.src || firstImage.src) : null;
+        }
+
+        // For regular sections, get the sharp-image
+        const sharpImage = section.querySelector('.sharp-image');
+        if (sharpImage) {
+            return sharpImage.dataset.src || sharpImage.src;
+        }
+
+        return null;
+    };
+
+    // Set initial background from first scroll section
+    const firstSection = document.querySelector('.scroll-section');
+    if (firstSection) {
+        const initialSrc = getImageSrcFromSection(firstSection);
+        setBackground(initialSrc);
+    }
+
+    // Handle scroll sections
+    const scrollSections = document.querySelectorAll('.scroll-section');
+    scrollSections.forEach((section) => {
         ScrollTrigger.create({
             trigger: section,
             start: 'top 80%',
             onEnter: () => {
-                if (isTextOnly) {
-                    clearBg();
-                } else {
-                    const src = getSectionBackground(section);
-                    setBg(src);
-                }
+                const src = getImageSrcFromSection(section);
+                setBackground(src);
             },
             onEnterBack: () => {
-                if (isTextOnly) {
-                    clearBg();
-                } else {
-                    const src = getSectionBackground(section);
-                    setBg(src);
-                }
+                const src = getImageSrcFromSection(section);
+                setBackground(src);
             }
         });
     });
 
+    // Handle slider image changes for multi-photo sections
+    const multiPhotoSections = document.querySelectorAll('.multi-photo-memory');
+    multiPhotoSections.forEach((section) => {
+        // We need to hook into the slider update mechanism
+        // Store a reference to update the background when slider changes
+        section.addEventListener('sliderImageChange', (e) => {
+            const src = getImageSrcFromSection(section);
+            setBackground(src);
+        });
+    });
+})();
+
+// Modify the slider update function to notify background about changes
+(function() {
+    const multiPhotoSections = document.querySelectorAll(".multi-photo-memory");
+
+    multiPhotoSections.forEach((multiPhotoSection, sliderIndex) => {
+        const sliderImages = gsap.utils.toArray(multiPhotoSection.querySelectorAll('.slider-image'));
+        
+        // Store original updateSlider if we need to wrap it
+        // We'll use MutationObserver to watch for active class changes
+        const observer = new MutationObserver(() => {
+            const activeImage = multiPhotoSection.querySelector('.slider-image.active');
+            if (activeImage) {
+                const src = activeImage.dataset.src || activeImage.src;
+                const bgContainer = document.getElementById('bg-transition');
+                if (bgContainer) {
+                    bgContainer.style.backgroundImage = `url("${src}")`;
+                }
+            }
+        });
+
+        // Watch all slider images for class changes
+        sliderImages.forEach(img => {
+            observer.observe(img, { attributes: true, attributeFilter: ['class'] });
+        });
+    });
 })();

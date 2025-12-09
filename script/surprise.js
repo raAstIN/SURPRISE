@@ -655,6 +655,7 @@ if (closingText) {
     let visible = layerA;
     let hidden = layerB;
     const loadedImages = new Set();
+    let latestRequestedSrc = null; // prevents stale onload from overwriting
 
     const getSectionBackground = (section) => {
         if (section.dataset && section.dataset.bg) return section.dataset.bg;
@@ -672,32 +673,38 @@ if (closingText) {
         return src;
     };
 
-    const setBg = (src) => {
-        if (!src || loadedImages.has(src)) {
-            // اگر قبلاً لود شده، فقط transition انجام بده
-            if (src) {
-                hidden.style.backgroundImage = `url("${src}")`;
-            }
-        } else {
-            // لود تصویر جدید
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.onload = () => {
-                hidden.style.backgroundImage = `url("${src}")`;
-                loadedImages.add(src);
-            };
-            img.onerror = () => {
-                hidden.style.backgroundImage = 'none';
-            };
-            img.src = src;
-        }
-        
+    const clearBg = () => {
+        latestRequestedSrc = null;
+        // Clear both layers to black to avoid remnants
+        layerA.style.backgroundImage = 'none';
+        layerB.style.backgroundImage = 'none';
+        layerA.style.backgroundColor = '#000';
+        layerB.style.backgroundColor = '#000';
+        layerA.style.transition = 'none';
+        layerB.style.transition = 'none';
+        layerA.style.opacity = '1';
+        layerB.style.opacity = '0';
+        // make sure visible points to layerA
+        visible = layerA;
+        hidden = layerB;
+        layerA.classList.add('visible');
+        layerB.classList.remove('visible');
+    };
+
+    const applyLoadedBackground = (src) => {
+        // ignore stale loads
+        if (latestRequestedSrc !== src) return;
+        // if already visible with same src, do nothing
+        if (visible.style.backgroundImage && visible.style.backgroundImage.indexOf(src) !== -1) return;
+
+        hidden.style.backgroundImage = `url("${src}")`;
+        hidden.style.backgroundColor = '#000';
         hidden.style.transition = 'none';
         hidden.style.opacity = '0';
         void hidden.offsetHeight;
         hidden.style.transition = 'opacity 0.7s ease-in-out';
         hidden.style.opacity = '1';
-        
+
         setTimeout(() => {
             visible.classList.remove('visible');
             hidden.classList.add('visible');
@@ -707,28 +714,74 @@ if (closingText) {
         }, 700);
     };
 
-    const firstBg = getSectionBackground(sections[0]);
-    if (firstBg) {
+    const setBg = (src) => {
+        latestRequestedSrc = src;
+        if (!src) {
+            clearBg();
+            return;
+        }
+
+        // if the requested src is already visible, keep it
+        if (visible.style.backgroundImage && visible.style.backgroundImage.indexOf(src) !== -1) return;
+
+        if (loadedImages.has(src)) {
+            applyLoadedBackground(src);
+            return;
+        }
+
         const img = new Image();
         img.crossOrigin = 'Anonymous';
         img.onload = () => {
-            visible.style.backgroundImage = `url("${firstBg}")`;
+            loadedImages.add(src);
+            applyLoadedBackground(src);
+        };
+        img.onerror = () => {
+            // if failed to load and still the latest request, clear background
+            if (latestRequestedSrc === src) clearBg();
+        };
+        img.src = src;
+    };
+
+    const firstBg = getSectionBackground(sections[0]);
+    if (firstBg) {
+        latestRequestedSrc = firstBg;
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
             loadedImages.add(firstBg);
+            visible.style.backgroundImage = `url("${firstBg}")`;
+            visible.classList.add('visible');
+        };
+        img.onerror = () => {
+            visible.style.backgroundColor = '#000';
+            visible.classList.add('visible');
         };
         img.src = firstBg;
+    } else {
+        clearBg();
     }
 
     sections.forEach((section) => {
+        const isTextOnly = section.classList.contains('text-only-section');
+
         ScrollTrigger.create({
             trigger: section,
-            start: 'top center',
+            start: 'top 80%',
             onEnter: () => {
-                const src = getSectionBackground(section);
-                setBg(src);
+                if (isTextOnly) {
+                    clearBg();
+                } else {
+                    const src = getSectionBackground(section);
+                    setBg(src);
+                }
             },
             onEnterBack: () => {
-                const src = getSectionBackground(section);
-                setBg(src);
+                if (isTextOnly) {
+                    clearBg();
+                } else {
+                    const src = getSectionBackground(section);
+                    setBg(src);
+                }
             }
         });
     });

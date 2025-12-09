@@ -1,5 +1,15 @@
 gsap.registerPlugin(ScrollTrigger);
 
+// iOS/Safari performance detection
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const isMobile = window.innerWidth <= 768;
+const isSlowDevice = isIOS || (isSafari && isMobile);
+
+// Reduced animation config for slow devices
+const SCRUB_VALUE = isSlowDevice ? false : 0.5;
+const SCRUB_VALUE_HEAVY = isSlowDevice ? false : 1.5;
+
 // --- بخش ۰: انیمیشن تایپ کردن عنوان و متن intro ---
 const introTitle = document.getElementById('intro-title');
 const introText1 = document.getElementById('intro-text1');
@@ -89,7 +99,7 @@ if (creativeWrapper) {
             trigger: creativeWrapper,
             start: "top 80%",
             end: "top top",
-            scrub: 1.5,
+            scrub: SCRUB_VALUE_HEAVY,
             markers: false,
         }
     });
@@ -272,7 +282,7 @@ imageSections.forEach((section, index) => {
                     trigger: section,
                     start: "top 90%",
                     end: "bottom 10%",
-                    scrub: 0.5,
+                    scrub: SCRUB_VALUE,
                     markers: false
                 }
             });
@@ -308,7 +318,7 @@ imageSections.forEach((section, index) => {
                     trigger: section,
                     start: "top 80%",
                     end: "top 50%",
-                    scrub: 0.5,
+                    scrub: SCRUB_VALUE,
                     markers: false
                 }
             }
@@ -343,7 +353,7 @@ imageSections.forEach((section, index) => {
                     trigger: section,
                     start: "top 80%",
                     end: "top 50%",
-                    scrub: 0.5,
+                    scrub: SCRUB_VALUE,
                     markers: false
                 }
             }
@@ -382,21 +392,21 @@ imageSections.forEach((section, index) => {
                         trigger: section,
                         start: "top 80%",
                         end: "top 50%",
-                        scrub: 0.5
+                        scrub: SCRUB_VALUE
                     }
                 }
             );
         }
     }
 
-    // Parallax effect برای عکس
-    if (imageWrapper && !isLastMemory) {
+    // Parallax effect برای عکس (disabled on iOS for performance)
+    if (imageWrapper && !isLastMemory && !isSlowDevice) {
         gsap.to(imageWrapper, {
             scrollTrigger: {
                 trigger: section,
                 start: "top center",
                 end: "bottom center",
-                scrub: 1,
+                scrub: SCRUB_VALUE,
                 markers: false
             },
             y: -30,

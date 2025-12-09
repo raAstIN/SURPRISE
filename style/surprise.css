@@ -653,31 +653,6 @@ body {
     opacity: 0;
 }
 
-/* Background crossfade container (simplified for better browser compatibility) */
-#bg-transition {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-#bg-transition .bg-layer {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-    opacity: 0;
-    transition: opacity 0.6s ease-in-out; /* lighter, simpler transition */
-    will-change: opacity;
-    filter: blur(6px) brightness(0.7); /* blur preserved */
-}
-
-#bg-transition .bg-layer.visible {
-    opacity: 1;
-}
-
 @keyframes fadeInContent {
     from {
         opacity: 0;
@@ -790,4 +765,51 @@ body {
     display: inline;
     margin-right: 0.4em;
     opacity: 0;
+}
+
+/* ============ iOS/Mobile Performance Optimization ============ */
+
+/* Reduce motion for accessibility and low-power devices */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    #bg-transition .bg-layer {
+        transition: opacity 0.3s linear !important;
+        filter: brightness(0.8) !important;
+    }
+}
+
+/* Mobile-specific GPU optimization */
+@media (max-width: 768px) {
+    /* Reduce blur on mobile for better performance */
+    #bg-transition .bg-layer {
+        will-change: opacity;
+        filter: brightness(0.75);
+    }
+
+    #bg-transition .bg-layer.blurred {
+        filter: blur(3px) brightness(0.65) !important;
+    }
+
+    /* Disable expensive transforms on mobile */
+    .sharp-image-wrapper {
+        transform: translateZ(0); /* Force GPU acceleration */
+    }
+
+    /* Reduce scroll image blur */
+    .scroll-image {
+        filter: blur(8px) brightness(0.6) !important;
+    }
+
+    /* Simplify parallax on mobile */
+    .content-frame {
+        will-change: auto;
+    }
 }

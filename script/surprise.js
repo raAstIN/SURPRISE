@@ -636,3 +636,76 @@ if (closingText) {
         }
     });
 }
+// --- Background crossfade (simplified for better browser compatibility) ---
+(function() {
+    const sections = document.querySelectorAll('.scroll-section');
+    if (!sections || sections.length === 0) return;
+
+    const bgContainer = document.createElement('div');
+    bgContainer.id = 'bg-transition';
+    const layerA = document.createElement('div');
+    layerA.className = 'bg-layer visible';
+    const layerB = document.createElement('div');
+    layerB.className = 'bg-layer';
+    bgContainer.appendChild(layerA);
+    bgContainer.appendChild(layerB);
+    document.body.insertBefore(bgContainer, document.body.firstChild);
+
+    let visible = layerA;
+    let hidden = layerB;
+
+    const getSectionBackground = (section) => {
+        if (section.dataset && section.dataset.bg) return section.dataset.bg;
+        const img = section.querySelector('img.scroll-image, img.slider-image, img.sharp-image');
+        let src = null;
+        if (img) {
+            src = (img.dataset && img.dataset.src) ? img.dataset.src : img.src;
+        }
+        if (!src) {
+            const cs = getComputedStyle(section);
+            const bg = cs.backgroundImage || '';
+            const m = bg.match(/url\((?:"|')?(.*?)(?:"|')?\)/);
+            if (m) src = m[1];
+        }
+        return src;
+    };
+
+    const setBg = (src) => {
+        if (!src) return;
+        hidden.style.backgroundImage = `url("${src}")`;
+        hidden.style.transition = 'none';
+        hidden.style.opacity = '0';
+        void hidden.offsetHeight;
+        hidden.style.transition = 'opacity 0.6s ease-in-out';
+        hidden.style.opacity = '1';
+        setTimeout(() => {
+            visible.classList.remove('visible');
+            hidden.classList.add('visible');
+            const tmp = visible;
+            visible = hidden;
+            hidden = tmp;
+        }, 600);
+    };
+
+    const firstBg = getSectionBackground(sections[0]);
+    if (firstBg) {
+        visible.style.backgroundImage = `url("${firstBg}")`;
+        visible.classList.add('visible');
+    }
+
+    sections.forEach((section) => {
+        ScrollTrigger.create({
+            trigger: section,
+            start: 'top center',
+            onEnter: () => {
+                const src = getSectionBackground(section);
+                setBg(src);
+            },
+            onEnterBack: () => {
+                const src = getSectionBackground(section);
+                setBg(src);
+            }
+        });
+    });
+
+})();

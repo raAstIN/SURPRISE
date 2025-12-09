@@ -173,10 +173,18 @@ body {
     transform: scale(0.9);
 }
 
+/* Tighter spacing specifically for creative/date slide */
+#date-slide .creative-content {
+    gap: 12px; /* reduce vertical spacing */
+    padding: 16px 18px;
+    max-width: 92%;
+    box-sizing: border-box;
+}
+
 .creative-title {
-    font-size: 3.5rem;
+    font-size: 3rem;
     font-weight: 700;
-    margin: 20px 0;
+    margin: 12px 0; /* reduce vertical margin */
 }
 
 .creative-subtitle {
@@ -194,17 +202,22 @@ body {
 
 .counter-container {
     display: flex;
-    gap: 30px;
-    margin: 30px 0;
+    gap: 14px; /* tightened spacing */
+    margin: 12px 0; /* smaller vertical margin */
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .time-box {
     background: rgba(255, 255, 255, 0.05);
-    padding: 20px 30px;
+    padding: 10px 16px; /* slightly smaller */
     border-radius: 10px;
-    min-width: 120px;
+    min-width: 76px; /* allow tighter arrangement */
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .time-box:hover {
@@ -213,7 +226,7 @@ body {
 }
 
 .time-box span {
-    font-size: 4rem;
+    font-size: 2.8rem; /* reduce size so boxes fit */
     font-weight: 700;
     display: block;
     color: #fff;
@@ -640,6 +653,31 @@ body {
     opacity: 0;
 }
 
+/* Background crossfade container (simplified for better browser compatibility) */
+#bg-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+#bg-transition .bg-layer {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out; /* lighter, simpler transition */
+    will-change: opacity;
+    filter: blur(6px) brightness(0.7); /* blur preserved */
+}
+
+#bg-transition .bg-layer.visible {
+    opacity: 1;
+}
+
 @keyframes fadeInContent {
     from {
         opacity: 0;
@@ -665,6 +703,24 @@ body {
 
     .creative-title {
         font-size: 2.5rem;
+    }
+
+    /* Mobile-specific fixes for #date-slide */
+    #date-slide .creative-subtitle {
+        font-size: 1rem; /* smaller on mobile */
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    #date-slide .creative-date {
+        margin-top: 12px; /* move up closer to counter */
+        margin-bottom: 0;
+        font-size: 0.95rem;
+    }
+
+    #date-slide .counter-container {
+        margin: 8px 0; /* further tighten margin */
+        gap: 10px;
     }
 
     .counter-container {

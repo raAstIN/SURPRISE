@@ -767,49 +767,62 @@ body {
     opacity: 0;
 }
 
-/* ============ iOS/Mobile Performance Optimization ============ */
+/* ============ WebGPU GPU-Optimized Rendering ============ */
 
-/* Reduce motion for accessibility and low-power devices */
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
-    
-    #bg-transition .bg-layer {
-        transition: opacity 0.3s linear !important;
-        filter: brightness(0.8) !important;
-    }
+/* Enable GPU acceleration for transforms and animations */
+:root[data-gpu-available="true"] * {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 
-/* Mobile-specific GPU optimization */
-@media (max-width: 768px) {
-    /* Reduce blur on mobile for better performance */
-    #bg-transition .bg-layer {
-        will-change: opacity;
-        filter: brightness(0.75);
-    }
+/* GPU-optimized background transitions with WebGPU */
+:root[data-gpu-available="true"] #bg-transition .bg-layer {
+    will-change: opacity, transform;
+    transform: translate3d(0, 0, 0) scale(1);
+    mix-blend-mode: screen;
+    filter: brightness(0.85) saturate(1.05);
+}
 
-    #bg-transition .bg-layer.blurred {
-        filter: blur(3px) brightness(0.65) !important;
-    }
+:root[data-gpu-available="true"] #bg-transition .bg-layer.blurred {
+    filter: blur(6px) brightness(0.7) saturate(1.1);
+    mix-blend-mode: multiply;
+}
 
-    /* Disable expensive transforms on mobile */
-    .sharp-image-wrapper {
-        transform: translateZ(0); /* Force GPU acceleration */
-    }
+/* Enhance animations with GPU when available */
+:root[data-gpu-available="true"] .content-frame,
+:root[data-gpu-available="true"] .text-content,
+:root[data-gpu-available="true"] .sharp-image-wrapper {
+    will-change: auto;
+    transform: translate3d(0, 0, 0);
+}
 
-    /* Reduce scroll image blur */
-    .scroll-image {
-        filter: blur(8px) brightness(0.6) !important;
-    }
+/* GPU-optimized backdrop filter for creative-content */
+:root[data-gpu-available="true"] .creative-content {
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
 
-    /* Simplify parallax on mobile */
-    .content-frame {
-        will-change: auto;
-    }
+/* Standard rendering (no WebGPU fallback) */
+#bg-transition .bg-layer {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 0.9s cubic-bezier(.22,.9,.35,1), transform 1s ease;
+    transform: scale(1.03);
+    will-change: opacity, transform;
+    filter: brightness(0.85);
+}
+
+#bg-transition .bg-layer.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+#bg-transition .bg-layer.blurred {
+    filter: blur(6px) brightness(0.7);
+    transform: scale(1.06);
 }

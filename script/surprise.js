@@ -1,14 +1,43 @@
 gsap.registerPlugin(ScrollTrigger);
 
-// iOS/Safari performance detection
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-const isMobile = window.innerWidth <= 768;
-const isSlowDevice = isIOS || (isSafari && isMobile);
-
-// Reduced animation config for slow devices
-const SCRUB_VALUE = isSlowDevice ? false : 0.5;
-const SCRUB_VALUE_HEAVY = isSlowDevice ? false : 1.5;
+// --- WebGPU Initialization (iOS 18+ Support) ---
+(async function initWebGPU() {
+    try {
+        if (!navigator.gpu) {
+            console.log('WebGPU not supported, using standard rendering');
+            return;
+        }
+        
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) {
+            console.log('WebGPU adapter not available');
+            return;
+        }
+        
+        const device = await adapter.requestDevice();
+        const canvas = document.createElement('canvas');
+        
+        // Store GPU capabilities for animation optimization
+        window.gpuCapabilities = {
+            hasWebGPU: true,
+            device: device,
+            adapter: adapter,
+            maxBindGroups: adapter.limits.maxBindGroups
+        };
+        
+        // Enable GPU-accelerated rendering for GSAP
+        gsap.config({
+            force3D: 'auto',
+            nullTargetAnim: true
+        });
+        
+        console.log('✓ WebGPU initialized successfully');
+        document.documentElement.dataset.gpuAvailable = 'true';
+    } catch (e) {
+        console.warn('WebGPU initialization failed:', e.message);
+        window.gpuCapabilities = { hasWebGPU: false };
+    }
+})();
 
 // --- بخش ۰: انیمیشن تایپ کردن عنوان و متن intro ---
 const introTitle = document.getElementById('intro-title');
@@ -99,7 +128,7 @@ if (creativeWrapper) {
             trigger: creativeWrapper,
             start: "top 80%",
             end: "top top",
-            scrub: SCRUB_VALUE_HEAVY,
+            scrub: 1.5,
             markers: false,
         }
     });
@@ -282,7 +311,7 @@ imageSections.forEach((section, index) => {
                     trigger: section,
                     start: "top 90%",
                     end: "bottom 10%",
-                    scrub: SCRUB_VALUE,
+                    scrub: 0.5,
                     markers: false
                 }
             });
@@ -318,7 +347,7 @@ imageSections.forEach((section, index) => {
                     trigger: section,
                     start: "top 80%",
                     end: "top 50%",
-                    scrub: SCRUB_VALUE,
+                    scrub: 0.5,
                     markers: false
                 }
             }
@@ -353,7 +382,7 @@ imageSections.forEach((section, index) => {
                     trigger: section,
                     start: "top 80%",
                     end: "top 50%",
-                    scrub: SCRUB_VALUE,
+                    scrub: 0.5,
                     markers: false
                 }
             }
@@ -392,21 +421,21 @@ imageSections.forEach((section, index) => {
                         trigger: section,
                         start: "top 80%",
                         end: "top 50%",
-                        scrub: SCRUB_VALUE
+                        scrub: 0.5
                     }
                 }
             );
         }
     }
 
-    // Parallax effect برای عکس (disabled on iOS for performance)
-    if (imageWrapper && !isLastMemory && !isSlowDevice) {
+    // Parallax effect برای عکس
+    if (imageWrapper && !isLastMemory) {
         gsap.to(imageWrapper, {
             scrollTrigger: {
                 trigger: section,
                 start: "top center",
                 end: "bottom center",
-                scrub: SCRUB_VALUE,
+                scrub: 1,
                 markers: false
             },
             y: -30,

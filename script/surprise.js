@@ -564,7 +564,7 @@ progressContainer.addEventListener('click', () => {
 
 // شمارشگرها
 const startDate = new Date('2022-05-20T00:00:00');
-const returnDate = new Date('2024-12-14T00:00:00');
+const returnDate = new Date('2024-12-14T22:27:30');
 
 function updateCounter() {
     const now = new Date();

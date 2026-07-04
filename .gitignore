@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Build outputs
+dist/
+build/
+
+# Editor directories
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Temporary
+*.tmp
+*.bak
+
+# OS files
+Thumbs.db
+
+# env
+.env
+
+# Pages
+gh-pages

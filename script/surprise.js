@@ -209,7 +209,7 @@ animateMemoryWords();
 
 // --- Countdown Timer ---
 function updateCountdownTimer() {
-    const startDate = new Date('2022-05-20');
+    const startDate = new Date('2020-01-01'); // تاریخ شروع نمونه
     const today = new Date();
     
     // محاسبه تفاوت
@@ -563,8 +563,8 @@ progressContainer.addEventListener('click', () => {
 });
 
 // شمارشگرها
-const startDate = new Date('2022-05-20T00:00:00');
-const returnDate = new Date('2024-12-14T22:27:30');
+const startDate = new Date('2020-01-01T00:00:00'); // تاریخ شروع نمونه
+const returnDate = new Date('2020-06-01T00:00:00'); // تاریخ رویداد نمونه
 
 function updateCounter() {
     const now = new Date();

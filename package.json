@@ -1,0 +1,17 @@
+{
+  "name": "surprise-portfolio",
+  "version": "0.1.0",
+  "description": "Interactive surprise / portfolio static template (Persian)",
+  "main": "index.html",
+  "scripts": {
+    "start": "live-server --port=8080",
+    "serve": "live-server --port=8080",
+    "lint": "echo \"No linter configured\""
+  },
+  "keywords": ["surprise","portfolio","html","css","js","persian"],
+  "author": "raastin",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
